@@ -2,15 +2,17 @@
 
 Authors: Florian Schroevers
 
+TODO: add main algorithm and improve visualization
+
 """
 import sys
 
 import numpy as np
-from scipy.spatial import distance_matrix
 from scipy.spatial.distance import cosine
 
 import api
 import visualization
+
 
 def playlist_transition_matrix(track_features):
     """ Returns a matrix of all possible `transitions`; vectors that are
@@ -73,7 +75,7 @@ def playlist_transition_score_matrix(track_features):
     distance_matrix = np.linalg.norm(transition_matrix, axis=-1)
 
     n_tracks = track_features.shape[0]
-    transtition_followup_matrix = np.empty((n_tracks, n_tracks, n_tracks))
+    transtition_followup_matrix = np.zeros((n_tracks, n_tracks, n_tracks))
 
     # TODO: optimize this
     # loop over triplets of tracks
@@ -81,30 +83,28 @@ def playlist_transition_score_matrix(track_features):
         for j in range(n_tracks):
             # don't check transitions to itself
             if i == j:
-                transtition_followup_matrix[i, j, :] = 0
-            else:
-                for k in range(n_tracks):
-                    # don't check transitions to itself
-                    if j == k:
-                        transtition_followup_matrix[:, j, k] = 0
-                    # make sure the second transition does not go to
-                    # the initial track
-                    elif i == k:
-                        transtition_followup_matrix[i, :, k] = 0
-                    else:
-                        # get the two transitions and calculate the cosine
-                        # similarity, and store in the output array
-                        transition1 = (transition_matrix[i, j])
-                        transition2 = (transition_matrix[j, k])
-                        transtition_followup_matrix[i, j, k] = \
-                            cosine(transition1, transition2) - 1
+                continue
+
+            transition1 = transition_matrix[i, j]
+
+            for k in range(n_tracks):
+                # don't check transitions to itself
+                if j == k or i == k:
+                    continue
+
+                transition2 = transition_matrix[j, k]
+
+                # the cosine similarity somehow gives values between 0 and
+                # 2, so subtract one to get proper values
+                cossim = cosine(transition1, transition2) - 1
+                transtition_followup_matrix[i, j, k] = cossim
 
     return distance_matrix, transtition_followup_matrix
 
 
 def make_recommendation(playlist):
-    """ Makes a recomendation to add to playlist based on a set of tracks  
-    
+    """ Makes a recomendation to add to playlist based on a set of tracks
+
     Paramters:
         track_features : pandas DataFrame
             The tracks to base the recomendation from. This should be the
@@ -113,27 +113,28 @@ def make_recommendation(playlist):
     Returns:
         recommendations : pandas DataFrame
             The recommendations based on the input.
-        
+
     """
     tracklist = []
 
-    tracknames = list(playlist['name'])
+    # tracknames = list(playlist['name'])
+
     track_features = playlist[['danceability', 'energy', 'loudness',
-        'speechiness', 'acousticness', 'instrumentalness', 'liveness', 
-        'valence']]
+                               'speechiness', 'acousticness',
+                               'instrumentalness', 'liveness', 'valence']]
 
     distance_matrix, transtition_followup_matrix = \
         playlist_transition_score_matrix(track_features.values)
 
-
     visualization.scatter(
-        track_features, 
-        distance_matrix, 
+        track_features,
+        distance_matrix,
         transtition_followup_matrix,
-        dim=3
+        dim=2
     )
 
     return tracklist
+
 
 def main(args):
     name, tracks = api.collect_tracks_query('psytrance', 'playlist')
@@ -144,6 +145,6 @@ def main(args):
 
 
 if __name__ == '__main__':
-    #argparser
+    # argparser
     args = sys.argv
     main(*args)

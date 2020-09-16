@@ -9,17 +9,19 @@ API.
 
 import pandas as pd
 import spotipy
-from spotipy.oauth2 import SpotifyClientCredentials
-from credentials import *
+from spotipy.oauth2 import SpotifyClientCredentials, SpotifyOauthError
+from credentials import SPOTIPY_CLIENT_ID, SPOTIPY_CLIENT_SECRET
 
 try:
     client_credentials_manager = SpotifyClientCredentials(
-        client_id = SPOTIPY_CLIENT_ID,
-        client_secret = SPOTIPY_CLIENT_SECRET
+        client_id=SPOTIPY_CLIENT_ID,
+        client_secret=SPOTIPY_CLIENT_SECRET
     )
     sp = spotipy.Spotify(client_credentials_manager=client_credentials_manager)
 except SpotifyOauthError:
-    print("Spotipy credentials not found (or incorrecty). Add them to `credentials.py` in this folder")
+    print("Spotipy credentials not found (or incorrecty)."
+          "Add them to `credentials.py` in this folder")
+
 
 def get_item_tracks(item):
     """ Returns a list of tracks from a given album or playlist
