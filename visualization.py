@@ -13,53 +13,43 @@ from sklearn.manifold import TSNE
 from sklearn.decomposition import PCA
 import plotly.express as px
 from matplotlib import cm
+import matplotlib.pyplot as plt
+from matplotlib.backend_bases import FigureCanvasBase
 import pandas as pd
+import time
 
 
-def scatter(x, dm, tm, mode='pca', dim=2):
+def plot_path(x, path, fitness, mode='none', keep=False):
+    if type(x) == pd.DataFrame:
+        x = x.values
+
     if mode == 'pca':
-        pca = PCA(n_components=dim)
+        pca = PCA(n_components=2)
         components = pca.fit_transform(x)
     elif mode == 'tsne':
-        tsne = TSNE(n_components=dim, perplexity=80)
+        tsne = TSNE(n_components=2, perplexity=80)
         components = tsne.fit_transform(x)
+    else:
+        components = x
 
-    df = pd.DataFrame(
-        data=components,
-        columns=['component1', 'component2'] + (dim == 3) * ['component3']
-    )
+    plt.clf()
 
-    if dim == 3:
-        fig = px.scatter_3d(df, x='component1', y='component2', z='component3',
-                            size_max=5, size=[1]*df.shape[0],
-                            color=dm[0], color_continuous_scale='YlOrRd')
-    elif dim == 2:
-        fig = px.scatter(df, x='component1', y='component2',
-                         size_max=5, size=[1]*df.shape[0],
-                         color=dm[0], color_continuous_scale='YlOrRd')
+    for i in range(1, len(path)):
+        vertex_1 = components[path[i - 1], 0], components[path[i - 1], 1]
+        vertex_2 = components[path[i], 0], components[path[i], 1]
 
-        fig.add_shape(
-            type='line',
-            x0=df.values[0, 0], y0=df.values[0, 1],
-            x1=df.values[2, 0], y1=df.values[2, 1],
+        plt.scatter(components[:, 0], components[:, 1])
+        plt.plot(
+            [vertex_1[0], vertex_2[0]],
+            [vertex_1[1], vertex_2[1]],
+            c='b'
         )
 
-        # Generate a color scale
-        cmap = cm.get_cmap('YlOrRd')
+    if keep:
+        plt.show()
+    else:
+        plt.draw()
+    plt.pause(0.01)
 
-        for i, final in enumerate(tm[0, 2]):
+    
 
-            if i == 0:
-                continue
-
-            color = cmap((final + 1)/2)[:-1]
-            color = f'rgb{tuple([int(c * 255) for c in color])}'
-
-            fig.add_shape(
-                type='line',
-                x0=df.values[2, 0], y0=df.values[2, 1],
-                x1=df.values[i, 0], y1=df.values[i, 1],
-                line=dict(color=color, width=2)
-            )
-
-    fig.show()

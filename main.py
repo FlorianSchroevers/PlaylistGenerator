@@ -8,98 +8,11 @@ TODO: add main algorithm and improve visualization
 import sys
 
 import numpy as np
-from scipy.spatial.distance import cosine
 
 import api
 import visualization
-
-
-def playlist_transition_matrix(track_features):
-    """ Returns a matrix of all possible `transitions`; vectors that are
-        simply the difference of two track vectors.
-
-    Parameters:
-        track_features : np.array
-            An N x M array where N is the number of tracks and M is the
-            number of features
-
-    Returns:
-        transition_matrix : np.array
-            N x N x M array of all possible transitions
-
-    """
-    n_transitions = track_features.shape[0]
-    n_features = track_features.shape[1]
-
-    # intialize empty return array of shape N x N x M
-    transition_matrix = np.empty((n_transitions, n_transitions, n_features))
-
-    # loop pairs of tracks
-    for i, track_vec in enumerate(track_features):
-        for j, other_track_vec in enumerate(track_features):
-            # transitions to self are 0
-            if i == j:
-                transition_matrix[i, j, :] = 0
-            else:
-                transition_matrix[i, j, :] = other_track_vec - track_vec
-
-    return transition_matrix
-
-
-def playlist_transition_score_matrix(track_features):
-    """ Associates a score to all possible pairs of transitions
-    (see function `playlist_transition_matrix`). A pair of transitions
-    will consist of three tracks, such that there are two transitions
-    (track a -> track b, track b -> track c). Each pair of transitions
-    will get a score based on the cosine similarity between two transitions.
-    This will ensure the playlist will more or less progress in the same
-    direction.
-
-    Parameters:
-        track_features : np.array
-            An N x M array where N is the number of tracks and M is the
-            number of features
-
-    Returns:
-        distance_matrix : np.array
-            N x N array of euclidean distances between tracks
-        transition_followup_matrix : np.array
-            N x N x N array of scores associated to transition pairs
-
-    """
-
-    transition_matrix = playlist_transition_matrix(track_features)
-
-    # transition matrix holds vectors 'between' tracks, the length of which
-    # is the euclidean distance
-    distance_matrix = np.linalg.norm(transition_matrix, axis=-1)
-
-    n_tracks = track_features.shape[0]
-    transtition_followup_matrix = np.zeros((n_tracks, n_tracks, n_tracks))
-
-    # TODO: optimize this
-    # loop over triplets of tracks
-    for i in range(n_tracks):
-        for j in range(n_tracks):
-            # don't check transitions to itself
-            if i == j:
-                continue
-
-            transition1 = transition_matrix[i, j]
-
-            for k in range(n_tracks):
-                # don't check transitions to itself
-                if j == k or i == k:
-                    continue
-
-                transition2 = transition_matrix[j, k]
-
-                # the cosine similarity somehow gives values between 0 and
-                # 2, so subtract one to get proper values
-                cossim = cosine(transition1, transition2) - 1
-                transtition_followup_matrix[i, j, k] = cossim
-
-    return distance_matrix, transtition_followup_matrix
+import search
+import ga
 
 
 def make_recommendation(playlist):
@@ -119,18 +32,20 @@ def make_recommendation(playlist):
 
     # tracknames = list(playlist['name'])
 
-    track_features = playlist[['danceability', 'energy', 'loudness',
-                               'speechiness', 'acousticness',
-                               'instrumentalness', 'liveness', 'valence']]
+    track_features = playlist[['danceability', 'energy']]
+                               # 'speechiness', 'acousticness',
+                               # 'instrumentalness', 'liveness', 'valence']]
 
-    distance_matrix, transtition_followup_matrix = \
-        playlist_transition_score_matrix(track_features.values)
+    track_features_matrix = track_features.values
 
-    visualization.scatter(
+    path, fitness = ga.genetic_algorithm(track_features_matrix)
+
+    visualization.plot_path(
         track_features,
-        distance_matrix,
-        transtition_followup_matrix,
-        dim=2
+        path,
+        fitness,
+        mode="none",
+        keep=True
     )
 
     return tracklist
