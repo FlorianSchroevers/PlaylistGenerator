@@ -9,28 +9,28 @@ TODO: comment file
 
 """
 
+# import time
+
 from sklearn.manifold import TSNE
 from sklearn.decomposition import PCA
-import plotly.express as px
-from matplotlib import cm
+# from matplotlib import cm
 import matplotlib.pyplot as plt
-from matplotlib.backend_bases import FigureCanvasBase
+# from matplotlib.backend_bases import FigureCanvasBase
 import pandas as pd
-import time
 
 
-def plot_path(x, path, fitness, mode='none', keep=False):
-    if type(x) == pd.DataFrame:
-        x = x.values
+def plot_path(points, path, fitness, mode='none', keep=False):
+    if isinstance(points, pd.DataFrame):
+        points = points.values
 
     if mode == 'pca':
         pca = PCA(n_components=2)
-        components = pca.fit_transform(x)
+        components = pca.fit_transform(points)
     elif mode == 'tsne':
         tsne = TSNE(n_components=2, perplexity=80)
-        components = tsne.fit_transform(x)
+        components = tsne.fit_transform(points)
     else:
-        components = x
+        components = points
 
     plt.clf()
 
@@ -50,6 +50,3 @@ def plot_path(x, path, fitness, mode='none', keep=False):
     else:
         plt.draw()
     plt.pause(0.01)
-
-    
-

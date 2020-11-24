@@ -11,7 +11,6 @@ import numpy as np
 
 import api
 import visualization
-import search
 import ga
 
 

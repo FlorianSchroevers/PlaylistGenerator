@@ -13,11 +13,11 @@ from spotipy.oauth2 import SpotifyClientCredentials, SpotifyOauthError
 from credentials import SPOTIPY_CLIENT_ID, SPOTIPY_CLIENT_SECRET
 
 try:
-    client_credentials_manager = SpotifyClientCredentials(
+    CLIENT_CREADENTIALS_MANAGER = SpotifyClientCredentials(
         client_id=SPOTIPY_CLIENT_ID,
         client_secret=SPOTIPY_CLIENT_SECRET
     )
-    sp = spotipy.Spotify(client_credentials_manager=client_credentials_manager)
+    sp = spotipy.Spotify(client_credentials_manager=CLIENT_CREADENTIALS_MANAGER)
 except SpotifyOauthError:
     print("Spotipy credentials not found (or incorrecty)."
           "Add them to `credentials.py` in this folder")
@@ -57,7 +57,7 @@ def get_item_tracks(item):
             new_tracks = [t['track'] for t in new_tracks]
 
         # stop if no tracks are found at this offset
-        if not len(new_tracks):
+        if len(new_tracks) != 0:
             break
 
         tracks += new_tracks

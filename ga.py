@@ -18,7 +18,7 @@ import visualization
 
 
 def initialize_population(tracks, population_size):
-    """ Initializes a population of a given size. One element of the 
+    """ Initializes a population of a given size. One element of the
         population, or an individual, represents a path through the tracks.
         The path is given by the indices of the tracks.
 
@@ -32,7 +32,6 @@ def initialize_population(tracks, population_size):
         population : list
             A list of 'individuals', each is a list of indices of the tracks
             array.
-    
     """
     population = []
 
@@ -65,7 +64,6 @@ def get_fitness(tracks, individual):
 
     Returns:
         fitness
-    
     """
     cossim_cost = 0
     distance_cost = 0
@@ -89,7 +87,7 @@ def get_fitness(tracks, individual):
     distance_cost += euclidean(tracks[individual[-2]], tracks[individual[-1]])
 
     # longer paths get a discount
-    path_length_cost = -(len(individual)/len(tracks))
+    # path_length_cost = -(len(individual)/len(tracks))
 
     # fitness is negative cost
     return -(distance_cost**0.5)
@@ -111,9 +109,9 @@ def select(tracks, population, death_rate=0.75):
 
     population = []
 
-    for p, f in population_fitness:
-        population.append(p)
-        fitnessess.append(f)
+    for pop, fit in population_fitness:
+        population.append(pop)
+        fitnessess.append(fit)
 
     n_surviving = int(death_rate * len(population))
 
@@ -122,12 +120,12 @@ def select(tracks, population, death_rate=0.75):
 
 def mutate(population, max_gene, mutation_prob=0.005):
     for individual in population:
-        for gene_i, gene in enumerate(individual):
-            if np.random.random() < mutation_prob:
+        for gene_i, _ in enumerate(individual):
+            if np.random.rand() < mutation_prob:
                 other_gene_i = np.random.randint(len(individual))
                 tmp = individual[other_gene_i]
                 individual[other_gene_i] = individual[gene_i]
-                individual[gene_i] =  tmp
+                individual[gene_i] = tmp
 
         # if np.random.random() < mutation_prob:
         #   add_gene = np.random.randint(max_gene)
@@ -147,6 +145,7 @@ def copulate(parent1, parent2):
     interval = parent1[start:end]
 
     child = []
+    i = 0
 
     for i, k in enumerate(parent2):
         if i == start:
@@ -158,7 +157,7 @@ def copulate(parent1, parent2):
     if i < start:
         child += interval
 
-    assert(len(set(child)) == len(child))
+    assert len(set(child)) == len(child)
     return child
 
 def breed(population, birth_rate=2):
@@ -214,7 +213,4 @@ def genetic_algorithm(tracks, n_generations=3000, population_size=100, plot=Fals
 
 
 if __name__ == "__main__":
-    tracks = np.random.random((5, 2))
-
-    genetic_algorithm(tracks)
-
+    genetic_algorithm(np.random.rand((5, 2)))
