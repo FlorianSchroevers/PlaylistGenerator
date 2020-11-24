@@ -5,9 +5,6 @@ Authors: Florian Schroevers
 TODO: add main algorithm and improve visualization
 
 """
-import sys
-
-import numpy as np
 
 import api
 import visualization
@@ -50,8 +47,9 @@ def make_recommendation(playlist):
     return tracklist
 
 
-def main(args):
-    name, tracks = api.collect_tracks_query('psytrance', 'playlist')
+def main():
+    """ main function """
+    _, tracks = api.collect_tracks_query('psytrance', 'playlist')
     playlist = api.get_tracklist_features(tracks)
     recommendation = make_recommendation(playlist)
 
@@ -60,5 +58,4 @@ def main(args):
 
 if __name__ == '__main__':
     # argparser
-    args = sys.argv
-    main(*args)
+    main()

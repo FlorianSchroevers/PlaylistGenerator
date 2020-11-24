@@ -94,13 +94,35 @@ def get_fitness(tracks, individual):
 
 
 def select(tracks, population, death_rate=0.75):
+    """ Uses natural selection to slim down a given population. For each
+        individual a fitness score will be calculated. The individuals
+        with a lower fitness (the fraction of which can be specified) die.
+
+    Paramters:
+        tracks : np.array
+            An NxM array of tracks, containing N tracks with M features each.
+        population : list
+            A list containing individuals.
+        death_rate : float (optional, default: 0.75)
+            The fraction of individuals to die during selection
+
+    Returns:
+        population : list
+            The surviving population
+        fitnessess : list
+            The fitnessess of the surviving population, matched with
+            'population' by index. The fitnessess are of the entire population
+            before selection.
+    """
     fitnessess = []
 
+    # get list of fitnessess
     for individual in population:
         fitnessess.append(get_fitness(tracks, individual))
 
     print(f"Mean fitness: {np.mean(fitnessess)}", end='\r')
 
+    # get a sorted list of a list of tuples containing indivuiduals and their fitness
     population_fitness = sorted(
         zip(population, fitnessess),
         key=lambda x: x[1],
@@ -109,16 +131,32 @@ def select(tracks, population, death_rate=0.75):
 
     population = []
 
+    # unzip the list of tuples
     for pop, fit in population_fitness:
         population.append(pop)
         fitnessess.append(fit)
 
+    # only keep the top scoring individuals
     n_surviving = int(death_rate * len(population))
+    population = population[:n_surviving]
 
-    return population[:n_surviving], fitnessess
+    return population, fitnessess
 
 
-def mutate(population, max_gene, mutation_prob=0.005):
+def mutate(population, mutation_prob=0.005):
+    """ Do random mutation of the genes in a given population based on some
+        probability.
+
+    Paramters:
+        population : list
+            A list containing individuals.
+        mutation_prob : float (optional, default: 0.005)
+            The probability of a mutation occuring in a gene.
+
+    Returns:
+        population : list
+            The mutated population
+    """
     for individual in population:
         for gene_i, _ in enumerate(individual):
             if np.random.rand() < mutation_prob:
@@ -139,6 +177,20 @@ def mutate(population, max_gene, mutation_prob=0.005):
     return population
 
 def copulate(parent1, parent2):
+    """ Combine two individuals into an offspring.
+
+    Paramters:
+        parent1 : list
+            The gene of the first parent.
+        parent2 : list
+            The gene of the second parent.
+
+    Returns:
+        child : list
+            The gene of the offspring.
+    """
+
+    # randomly choose the bounding indices of a section of the DNA from parent1
     startend = np.random.choice(list(range(len(parent1))), 4, replace=False)
 
     start, end = min(startend), max(startend)
@@ -147,6 +199,9 @@ def copulate(parent1, parent2):
     child = []
     i = 0
 
+    # add all genes from parent 2, that are not in the above interval, and add
+    # them in order to the child, if the index is in the interval, add the gene
+    # from parent one.
     for i, k in enumerate(parent2):
         if i == start:
             child += interval
@@ -157,15 +212,31 @@ def copulate(parent1, parent2):
     if i < start:
         child += interval
 
+    # make sure the child's dna contains unique genes
     assert len(set(child)) == len(child)
     return child
 
-def breed(population, birth_rate=2):
+def breed(population, birth_rate=2.):
+    """ Perform a batch of copulation between the individuals in a given
+        population by combining individuals.
+
+    Paramters:
+        population : list
+            A list containing individuals.
+        birth_rate : float (optional, default: 2.)
+            The number by which to multiply the number of individuals.
+            (2 means the population will be doubled)
+
+    Returns:
+        population : list
+            A list containing individuals including all new offspring.
+    """
     n_children = int(len(population) * (birth_rate - 1))
 
-    # TODO: make sure every individual breeds (maybe?)
+    # IDEA: make sure every individual breeds (maybe?)
 
     for _ in range(n_children):
+        # choose two random individuals from the population and breed them
         i, j = np.random.choice(list(range(len(population))), 2, replace=False)
         population.append(copulate(population[i], population[j]))
 
@@ -173,6 +244,25 @@ def breed(population, birth_rate=2):
 
 
 def genetic_algorithm(tracks, n_generations=3000, population_size=100, plot=False):
+    """ Perform a Genetic Algorithm (GA) on an array of tracks to find the best
+        fitting path (order for the tracks).
+
+    Paramters:
+        tracks : np.ndarray
+            An array of points, each point represents a track.
+        n_generations : int (optional, default: 3000)
+            The number of generations
+        population_size : int (optional, default: 100)
+            The size of the population
+        plot : bool (optional, default: False)
+            Whether to plot the best path of each generation.
+
+    Returns:
+        best_individual : list
+            The best path found by the algorithm.
+        best_fitness : float
+            The fitness of the best path found by the algorithm.
+    """
     population = initialize_population(tracks, population_size)
 
     best_fitness = -float("inf")
@@ -183,7 +273,7 @@ def genetic_algorithm(tracks, n_generations=3000, population_size=100, plot=Fals
 
     for generation in range(n_generations):
         print(f"Generation: {generation + 1}", end=', ')
-        population = mutate(population, len(tracks))
+        population = mutate(population)
         population, fitness = select(tracks, population)
         population = breed(population)
         population = population[:population_size]
@@ -213,4 +303,4 @@ def genetic_algorithm(tracks, n_generations=3000, population_size=100, plot=Fals
 
 
 if __name__ == "__main__":
-    genetic_algorithm(np.random.rand((5, 2)))
+    genetic_algorithm(np.random.rand(5, 2))
