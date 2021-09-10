@@ -57,7 +57,7 @@ def get_item_tracks(item):
             new_tracks = [collection_type['track'] for collection_type in new_tracks]
 
         # stop if no tracks are found at this offset
-        if len(new_tracks) != 0:
+        if len(new_tracks) == 0:
             break
 
         tracks += new_tracks

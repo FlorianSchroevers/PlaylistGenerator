@@ -11,7 +11,7 @@ import visualization
 import ga
 
 
-def make_recommendation(playlist):
+def make_recommendation_ga(playlist):
     """ Makes a recomendation to add to playlist based on a set of tracks
 
     Paramters:
@@ -27,6 +27,7 @@ def make_recommendation(playlist):
     tracklist = []
 
     # tracknames = list(playlist['name'])
+    print(playlist.head())
 
     track_features = playlist[['danceability', 'energy']]
                                # 'speechiness', 'acousticness',
@@ -34,7 +35,7 @@ def make_recommendation(playlist):
 
     track_features_matrix = track_features.values
 
-    path, fitness = ga.genetic_algorithm(track_features_matrix)
+    path, fitness = ga.genetic_algorithm(track_features_matrix, plot=False)
 
     visualization.plot_path(
         track_features,
@@ -51,7 +52,7 @@ def main():
     """ main function """
     _, tracks = api.collect_tracks_query('psytrance', 'playlist')
     playlist = api.get_tracklist_features(tracks)
-    recommendation = make_recommendation(playlist)
+    recommendation = make_recommendation_ga(playlist)
 
     print(recommendation)
 
